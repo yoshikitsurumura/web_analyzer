@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Website Analyzer</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>AI Website Analyzer</h1>
+    </header>
+    <main>
+        <div class="container">
+            <p>分析したいウェブサイトのURLを入力してください。</p>
+            <input type="text" id="urlInput" placeholder="https://example.com">
+            <button id="analyzeBtn">分析開始</button>
+            <div id="loading" style="display: none;">
+                <p>分析中...</p>
+            </div>
+            <div id="tabs">
+                <div id="tab-headers">
+                    <!-- タブのヘッダーがここに動的に追加されます -->
+                </div>
+                <div id="tab-contents">
+                    <!-- タブのコンテンツがここに動的に追加されます -->
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="/static/script.js"></script>
+</body>
+</html>

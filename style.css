@@ -1,0 +1,406 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background: #eef2f7; /* Light blue-gray background */
+    color: #333;
+}
+
+header {
+    background: linear-gradient(to right, #4a00e0, #8e2de2); /* Gradient purple */
+    color: #fff;
+    padding: 1.5rem 0;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.2em;
+}
+
+main {
+    padding: 1.5rem;
+}
+
+.container {
+    max-width: 960px; /* Wider container */
+    margin: auto;
+    overflow: hidden;
+    padding: 0 2rem;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+input[type="text"] {
+    width: calc(70% - 20px); /* Adjust for padding */
+    padding: 12px;
+    margin-right: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+button {
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    background: #673ab7; /* Deep purple */
+    color: #fff;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background: #5e35b1; /* Darker purple on hover */
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+#loading {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 1.1em;
+    color: #555;
+}
+
+/* タブ関連のスタイル */
+#tabs {
+    margin-top: 30px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+#tab-headers {
+    display: flex;
+    border-bottom: 1px solid #e0e0e0;
+    overflow-x: auto; /* タブが多い場合にスクロール可能にする */
+    background-color: #f8f8f8;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    padding: 5px 0;
+}
+
+.tab-header {
+    background: transparent;
+    border: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 0.95em;
+    color: #555;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent; /* アクティブ時の下線用 */
+    white-space: nowrap; /* テキストの折り返しを防ぐ */
+    overflow: hidden; /* はみ出た部分を隠す */
+    text-overflow: ellipsis; /* はみ出た部分を...で表示 */
+    max-width: 200px; /* タブの最大幅 */
+    flex-shrink: 0; /* タブが縮まないようにする */
+}
+
+.tab-header:hover {
+    color: #673ab7;
+    background-color: #f0f0f0;
+}
+
+.tab-header.active {
+    color: #673ab7; /* アクティブなタブのテキスト色 */
+    font-weight: bold;
+    border-bottom: 3px solid #673ab7; /* アクティブなタブの下線 */
+    background-color: #fff;
+}
+
+#tab-contents {
+    padding: 20px;
+}
+
+.tab-content {
+    display: none; /* デフォルトでは非表示 */
+    animation: fadeIn 0.5s ease-in-out; /* フェードインアニメーション */
+}
+
+.tab-content.active {
+    display: block; /* アクティブなタブコンテンツのみ表示 */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 提案カードのスタイル */
+.suggestion-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-3px);
+}
+
+.suggestion-card h2 {
+    color: #424242;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    font-size: 1.6em;
+}
+
+/* 比較表示のコンテナ */
+.comparison-container {
+    display: flex;
+    gap: 25px; /* アイテム間のスペース */
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* 小さい画面で折り返す */
+}
+
+.comparison-item {
+    flex: 1; /* 利用可能なスペースを均等に分配 */
+    min-width: 300px; /* 最小幅を少し広げる */
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 8px;
+    background: #fdfdfd;
+    box-shadow: inset 0 1px 5px rgba(0,0,0,0.05);
+}
+
+.comparison-item.original {
+    background-color: #ffebee; /* Light red */
+}
+
+.comparison-item.suggested {
+    background-color: #e8f5e9; /* Light green */
+}
+
+.comparison-item h3 {
+    margin-top: 0;
+    color: #555;
+    font-size: 1.2em;
+    border-bottom: 1px dashed #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.comparison-item p {
+    white-space: pre-wrap; /* 改行を保持 */
+    word-break: break-word; /* 長い単語で改行 */
+    font-size: 0.95em;
+}
+
+/* preタグのスタイルを追加 */
+.comparison-item pre, .apply-instructions pre {
+    white-space: pre-wrap; /* 改行とスペースを保持し、必要に応じて折り返す */
+    word-break: break-word; /* 長い単語でも強制的に改行 */
+    overflow: auto; /* はみ出た場合にスクロールバーを表示 */
+    background-color: #f5f5f5;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #eee;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+/* 提案理由のスタイル */
+.reason {
+    background: #e3f2fd; /* Light blue */
+    border-left: 5px solid #2196F3;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+}
+
+.reason h3 {
+    color: #1976D2;
+    margin-top: 0;
+    font-size: 1.3em;
+    margin-bottom: 10px;
+}
+
+.reason p {
+    font-size: 0.95em;
+}
+
+/* アクションボタンのスタイル */
+.actions {
+    text-align: right;
+    margin-top: 20px;
+}
+
+.action-btn {
+    padding: 12px 22px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-left: 12px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.adopt-btn {
+    background-color: #4CAF50; /* Green */
+    color: white;
+}
+
+.adopt-btn:hover {
+    background-color: #43a047;
+}
+
+.keep-btn {
+    background-color: #f44336; /* Red */
+    color: white;
+}
+
+.keep-btn:hover {
+    background-color: #e53935;
+}
+
+/* 最後のメッセージ */
+.closing-message {
+    text-align: center;
+    margin-top: 40px;
+    font-style: italic;
+    color: #666;
+    font-size: 1.1em;
+}
+
+/* ファイルタイプヒントのスタイル */
+.file-type-hint {
+    background-color: #f0f4f8; /* Light gray-blue */
+    border-left: 4px solid #90caf9; /* Light blue border */
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.file-type-hint strong {
+    color: #333;
+}
+
+/* 適用方法のセクション */
+.apply-instructions {
+    background-color: #fffde7; /* Light yellow */
+    border: 1px dashed #ffeb3b; /* Yellow dashed border */
+    padding: 20px;
+    margin-top: 25px;
+    border-radius: 8px;
+}
+
+.apply-instructions h3 {
+    color: #fbc02d; /* Darker yellow */
+    margin-top: 0;
+    font-size: 1.4em;
+    border-bottom: 1px solid #ffeb3b;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.apply-instructions p {
+    margin-bottom: 10px;
+    font-size: 0.95em;
+}
+
+.apply-instructions pre {
+    background-color: #fff8e1; /* Lighter yellow for code */
+    border: 1px solid #ffe082;
+}
+
+.auto-apply-section {
+    background-color: #e0f2f7; /* Light cyan */
+    border: 1px solid #80deea;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.auto-apply-section h4 {
+    color: #00838f; /* Dark cyan */
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.file-path-input {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.apply-status {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* コピーボタンのスタイル */
+.copy-btn {
+    background-color: #03a9f4; /* Light blue */
+    color: white;
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.copy-btn:hover {
+    background-color: #039be5;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px;
+    }
+    input[type="text"] {
+        width: calc(100% - 20px);
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+    button {
+        width: 100%;
+    }
+    .comparison-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .comparison-item {
+        min-width: unset;
+    }
+    .action-btn {
+        width: calc(50% - 6px);
+        margin-left: 0;
+        margin-bottom: 10px;
+    }
+    .action-btn:first-child {
+        margin-right: 12px;
+    }
+    .tab-header {
+        max-width: 120px; /* 小さい画面でのタブの最大幅 */
+        padding: 10px 15px;
+    }
+}
