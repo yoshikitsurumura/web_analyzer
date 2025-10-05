@@ -88,6 +88,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     tabContent.innerHTML = `<h2>分析結果: <a href="${pageAnalysis.url}" target="_blank">${pageAnalysis.url}</a></h2>`;
 
+                    // AIによる提案キーワードの表示
+                    if (pageAnalysis.suggested_keywords && pageAnalysis.suggested_keywords.length > 0) {
+                        const keywordTemplate = document.getElementById('keyword-template');
+                        const keywordsContainer = keywordTemplate.content.cloneNode(true);
+                        const ul = keywordsContainer.querySelector('ul');
+                        pageAnalysis.suggested_keywords.forEach(keyword => {
+                            const li = document.createElement('li');
+                            li.textContent = keyword;
+                            ul.appendChild(li);
+                        });
+                        tabContent.appendChild(keywordsContainer);
+                    }
+
                     if (pageAnalysis.error) {
                         tabContent.innerHTML += `<p style="color: red;">このページの分析中にエラーが発生しました: ${pageAnalysis.error}</p>`;
                         if (pageAnalysis.raw_response && pageAnalysis.raw_response !== "N/A") {

@@ -85,47 +85,80 @@ def get_internal_links(html_content: str, base_url: str) -> list[str]:
     return list(internal_links)
 
 # --- 分析ロジック ---
-def analyze_website_with_ai(site_text):
-    """AIを使ってウェブサイトのテキストを分析し、改善点を提案する"""
+def analyze_website_with_ai(site_html):
+    """AIを使ってウェブサイトのHTMLを分析し、改善点を提案する"""
     print("AI分析を開始します...") # 追加
     model = genai.GenerativeModel('gemini-1.5-flash')
+    raw_ai_response = "N/A" # AIからの生応答を事前に初期化
     
     prompt = f"""
-あなたは、中小企業の経営者や個人事業主を顧客に持つ、非常に優秀なウェブコンサルタントです。
-専門用語を一切使わず、誰にでも理解できる言葉で、具体的かつ実践的なアドバイスをすることに長けています。
+あなたは、中小企業の経営者や個人事業主を顧客に持つ、非常に優秀なSEOコンサルタントです。
+専門用語を極力使わず、誰にでも理解できる言葉で、具体的かつ実践的な改善案を提案することに長けています。
 
-以下のウェブサイトのテキスト情報を分析し、次の3つの観点から「明日からすぐに実行できる改善案」を提案してください。
-各提案は、元のテキストと提案するテキスト、その理由、そして**変更が想定されるファイルの種類（HTML, CSS, JavaScriptのいずれか）**を明確に含めてください。
+以下のウェブサイトのHTMLソースコードを分析し、次の項目について具体的な提案をしてください。
+- **提案キーワード**: このサイトのビジネス内容や強みから、顧客が検索しそうなキーワードを**5つ**提案してください。
+- **改善案**: 「コンテンツの魅力」と「技術的なSEO」の両面から、「明日からすぐに実行できる改善案」を**5つ**提案してください。
+
+各改善案は、元のHTMLコードと提案するHTMLコード、その理由、そして変更が想定されるファイルの種類（HTMLが主）を明確に含めてください。
 
 **重要:**
-*   `original_text`には、ウェブサイトのソースコード（HTML）から直接コピー＆ペーストできるような、**具体的なテキストまたはコードスニペット**を記述してください。もし該当する具体的なテキストが見つからない場合は、その提案の`original_text`は空文字列にしてください。
-*   `suggested_text`には、`original_text`を置き換えるための、**具体的なテキストまたはコードスニペット**を記述してください。
-*   `file_type_hint`には、この変更が適用されるべきファイルの種類を「HTML」「CSS」「JavaScript」のいずれかで記述してください。
+*   `original_text`には、ウェブサイトのソースコード（HTML）から直接コピー＆ペーストできるような、**具体的なHTMLスニペット**を記述してください。改善案が「新しい要素の追加」である場合（例：meta descriptionの追加）、`original_text`は空文字列にしてください。
+*   `suggested_text`には、`original_text`を置き換えるか、新しく追加するための**具体的なHTMLスニペット**を記述してください。
+*   `file_type_hint`には、この変更が適用されるべきファイルの種類を「HTML」「CSS」「JavaScript」のいずれかで記述してください（ほとんどの場合「HTML」になるはずです）。
+*   `category`には、以下のいずれかを記述してください。
 
-1.  **キャッチコピー・見出しの魅力:**
-    *   もっと訪問者の心をつかむ、魅力的な言葉にできないか？
-    *   何屋さんなのか、何を提供しているのか、一瞬で伝わるか？
+---
+### 分析の観点
 
-2.  **サービスの分かりやすさ:**
-    *   提供しているサービスや商品の強み、特徴が明確に伝わるか？
-    *   専門的すぎたり、逆に説明が不足している部分はないか？
+1.  **コンテンツの魅力（キャッチコピー、見出し、サービス説明）**
+    *   訪問者の心をつかむ、魅力的な言葉になっているか？
+    *   提供しているサービスや商品の強みが明確に伝わるか？
+    *   「お問い合わせ」や「購入」など、訪問者にとってほしい行動が明確に示されているか？
 
-3.  **訪問者にしてほしい行動（CTA）の明確さ:**
-    *   「お問い合わせ」「購入」「資料請求」など、訪問者にとってほしい行動が明確に示されているか？
-    *   その行動を促すためのボタンやリンクは分かりやすいか？
+2.  **技術的なSEO（検索エンジン向けの最適化）**
+    *   **タイトルタグ (`<title>`)**: ページの主題が簡潔に分かりやすく記述されているか？
+    *   **メタディスクリプション (`<meta name="description">`)**: 検索結果に表示されるページの説明文が設定されているか？内容は適切か？
+    *   **見出しタグ (`<h1>`)**: ページで最も重要な見出しとして、適切に使われているか？（各ページに1つが理想）
+    *   **画像の代替テキスト (`alt`属性)**: 画像が表示されない場合や、目の不自由な方向けのテキストが、全ての`<img>`タグに設定されているか？
+    *   **OGP (Open Graph Protocol)**: SNSでシェアされた際に、意図した画像やタイトルが表示されるための設定（`og:title`, `og:description`, `og:image`など）はされているか？
+    *   **構造化データ (Schema.org)**: 検索エンジンがページ内容を正確に理解するための「構造化データ」は設定されているか？もし設定されていない場合、このサイトのビジネス内容（例: 地域の店舗、オンライン記事、商品ページ等）に最も適した**JSON-LD形式の構造化データコードを生成して提案してください。** 既存の場合は、内容をレビューし改善案を提示してください。
+
+---
+### 出力形式 (JSON)
 
 制約条件:
-*   必ず3つの改善案を提案してください。
+*   必ず5つの改善案と、5つの提案キーワードを提案してください。
 *   出力は必ずJSON形式でお願いします。JSONの構造は以下の通りです。
 ```json
 {{
+  "suggested_keywords": [
+    "提案キーワード1",
+    "提案キーワード2",
+    "提案キーワード3",
+    "提案キーワード4",
+    "提案キーワード5"
+  ],
   "suggestions": [
     {{
-      "category": "提案カテゴリ（例: キャッチコピー・見出し、サービスの分かりやすさ、訪問者にしてほしい行動）",
-      "original_text": "ウェブサイトのソースコードからコピーできる具体的なテキストまたはコードスニペット",
-      "suggested_text": "original_textを置き換えるための具体的なテキストまたはコードスニペット",
-      "reason": "この提案の理由を簡潔に説明",
-      "file_type_hint": "HTML" // または "CSS", "JavaScript"
+      "category": "提案カテゴリ（例: 技術的なSEO, コンテンツの魅力）",
+      "original_text": "ウェブサイトのソースコードからコピーできる具体的なHTMLスニペット",
+      "suggested_text": "original_textを置き換えるか新しく追加するHTMLスニペット",
+      "reason": "この提案の理由を、専門用語を避けて簡潔に説明",
+      "file_type_hint": "HTML"
+    }},
+    {{
+      "category": "...",
+      "original_text": "...",
+      "suggested_text": "...",
+      "reason": "...",
+      "file_type_hint": "..."
+    }},
+    {{
+      "category": "...",
+      "original_text": "...",
+      "suggested_text": "...",
+      "reason": "...",
+      "file_type_hint": "..."
     }},
     {{
       "category": "...",
@@ -142,15 +175,15 @@ def analyze_website_with_ai(site_text):
       "file_type_hint": "..."
     }}
   ],
-  "closing_message": "この提案が、あなたのビジネスを加速させる一助となれば幸いです。"
+  "closing_message": "これらの改善とキーワード戦略で、より多くの人にあなたのウェブサイトが見つけてもらいやすくなります。"
 }}
 ```
 *   JSON以外の余計なテキストは一切含めないでください。
-*   専門用語（例：SEO, CVR, UX, CTAなど）は絶対に使用しないでください。
+*   理由の説明では、専門用語（例：SEO, CVR, UX, CTAなど）は避け、「検索エンジンが内容を理解しやすくなる」「検索結果でクリックされやすくなる」といった平易な言葉で説明してください。
 
 ---
-【分析対象のウェブサイト テキスト情報】
-{site_text}
+【分析対象のウェブサイト HTMLソースコード】
+{site_html}
 ---
 """
     
@@ -207,16 +240,12 @@ def analyze_website_endpoint(request: AnalyzeRequest):
             html_content = response.text  # リンク抽出のためにHTMLコンテンツを保持
             print(f"ウェブサイトコンテンツの取得が完了しました: {current_url}") # 追加
 
-            # 2. HTMLをパースしてテキストを抽出
-            soup = BeautifulSoup(html_content, 'html.parser')
-            site_text = soup.get_text(separator=' ', strip=True)
+            # HTMLコンテンツが長すぎる場合、AIが処理しやすいように短縮する
+            if len(html_content) > 20000: # テキストより多くの情報を保持するため、上限を少し増やす
+                html_content = html_content[:20000]
 
-            # テキストが長すぎる場合、AIが処理しやすいように短縮する
-            if len(site_text) > 10000:
-                site_text = site_text[:10000]
-
-            # 3. AIによる分析を実行
-            ai_response = analyze_website_with_ai(site_text)
+            # 3. AIによる分析を実行 (HTML全体を渡す)
+            ai_response = analyze_website_with_ai(html_content)
 
             if "error" in ai_response:
                 pages_analysis.append({
@@ -228,6 +257,7 @@ def analyze_website_endpoint(request: AnalyzeRequest):
                 pages_analysis.append({
                     "url": current_url,
                     "suggestions": ai_response.get("suggestions", []),
+                    "suggested_keywords": ai_response.get("suggested_keywords", []),
                     "closing_message": ai_response.get("closing_message", "")
                 })
                 # 最初のページのclosing_messageを全体のclosing_messageとして採用
