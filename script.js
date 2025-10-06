@@ -4,6 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabHeaders = document.getElementById('tab-headers');
     const tabContents = document.getElementById('tab-contents');
     const loadingDiv = document.getElementById('loading');
+    const pdfDownloadContainer = document.getElementById('pdf-download-container');
+    const pdfDownloadBtn = document.getElementById('pdfDownloadBtn');
+
+    let currentAnalysisData = null; // 分析結果を保持する変数
 
     // ローカルストレージから採用済み提案を読み込む
     function getAdoptedSuggestions() {
@@ -64,6 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
+
+            currentAnalysisData = data; // 分析結果を保存
+            pdfDownloadContainer.style.display = 'block'; // PDFダウンロードボタンを表示
 
             const adoptedSuggestions = getAdoptedSuggestions();
             let hasNewSuggestions = false; // 新しい提案があるかどうかのフラグ
@@ -145,6 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="reason">
                                     <h3>提案理由</h3>
                                     <p>${suggestion.reason}</p>
+                                </div>
+                                <div class="analytics-guidance">
+                                    <h4><span class="pro-tip-icon">💡</span>プロのヒント：効果測定の方法</h4>
+                                    <p>${suggestion.analytics_guidance || 'この提案に関する具体的な効果測定ガイドはありません。'}</p>
                                 </div>
                                 <div class="actions">
                                     <button class="action-btn adopt-btn">採用</button>
@@ -345,6 +356,51 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // PDFダウンロードボタンのクリックイベント
+    pdfDownloadBtn.addEventListener('click', () => {
+        if (!currentAnalysisData) {
+            alert('PDFを生成するための分析データがありません。');
+            return;
+        }
+
+        pdfDownloadBtn.textContent = '生成中...';
+        pdfDownloadBtn.disabled = true;
+
+        fetch('http://127.0.0.1:8000/generate_pdf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(currentAnalysisData),
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.detail || 'PDFの生成に失敗しました。'); });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'seo_analysis_report.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            pdfDownloadBtn.textContent = 'PDFレポートをダウンロード';
+            pdfDownloadBtn.disabled = false;
+        })
+        .catch(error => {
+            console.error('PDF生成エラー:', error);
+            alert(`PDFの生成中にエラーが発生しました: ${error.message}`);
+            pdfDownloadBtn.textContent = 'PDFレポートをダウンロード';
+            pdfDownloadBtn.disabled = false;
+        });
+    });
 
     // HTMLエスケープ関数
     function escapeHtml(text) {

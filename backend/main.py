@@ -10,6 +10,17 @@ from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 import json
 from urllib.parse import urljoin, urlparse
+from fastapi.responses import StreamingResponse
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+from reportlab.pdfbase import pdfmetrics
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_LEFT, TA_CENTER
+from reportlab.lib.colors import navy, black
+from reportlab.lib.units import inch
+from typing import List, Optional
 
 # .env ファイルを読み込む
 load_dotenv()
@@ -53,6 +64,23 @@ class ApplySuggestionRequest(BaseModel):
     original_text: str
     suggested_text: str
     file_type_hint: str # フロントエンドから渡されるが、ここでは直接使用しない
+
+class Suggestion(BaseModel):
+    category: str
+    original_text: Optional[str] = ""
+    suggested_text: Optional[str] = ""
+    reason: str
+    file_type_hint: Optional[str] = ""
+    analytics_guidance: Optional[str] = ""
+
+class PageAnalysis(BaseModel):
+    url: str
+    suggestions: List[Suggestion]
+    suggested_keywords: List[str]
+
+class PdfRequest(BaseModel):
+    pages_analysis: List[PageAnalysis]
+    closing_message: str
 
 # --- 定数 ---
 MAX_PAGES_TO_ANALYZE = 10 # 分析する最大ページ数（初期ページ含む）
@@ -98,6 +126,7 @@ def analyze_website_with_ai(site_html):
 以下のウェブサイトのHTMLソースコードを分析し、次の項目について具体的な提案をしてください。
 - **提案キーワード**: このサイトのビジネス内容や強みから、顧客が検索しそうなキーワードを**5つ**提案してください。
 - **改善案**: 「コンテンツの魅力」と「技術的なSEO」の両面から、「明日からすぐに実行できる改善案」を**5つ**提案してください。
+- **効果測定ガイド**: 各改善案について、**その施策の効果をGoogle Analyticsでどう確認すればよいか**、具体的なガイドを生成してください。
 
 各改善案は、元のHTMLコードと提案するHTMLコード、その理由、そして変更が想定されるファイルの種類（HTMLが主）を明確に含めてください。
 
@@ -106,6 +135,7 @@ def analyze_website_with_ai(site_html):
 *   `suggested_text`には、`original_text`を置き換えるか、新しく追加するための**具体的なHTMLスニペット**を記述してください。
 *   `file_type_hint`には、この変更が適用されるべきファイルの種類を「HTML」「CSS」「JavaScript」のいずれかで記述してください（ほとんどの場合「HTML」になるはずです）。
 *   `category`には、以下のいずれかを記述してください。
+*   `analytics_guidance`には、「この変更後、Google Analyticsの**[レポート名] > [項目]**で、**[指標]**がどう変化したかを確認してください。**[その理由]**」という形式で、具体的かつ実践的なアドバイスを記述してください。
 
 ---
 ### 分析の観点
@@ -144,7 +174,8 @@ def analyze_website_with_ai(site_html):
       "original_text": "ウェブサイトのソースコードからコピーできる具体的なHTMLスニペット",
       "suggested_text": "original_textを置き換えるか新しく追加するHTMLスニペット",
       "reason": "この提案の理由を、専門用語を避けて簡潔に説明",
-      "file_type_hint": "HTML"
+      "file_type_hint": "HTML",
+      "analytics_guidance": "この変更後、Google Analyticsの[レポート名] > [項目]で、[指標]がどう変化したかを確認してください。[その理由]"
     }},
     {{
       "category": "...",
@@ -316,3 +347,102 @@ async def apply_suggestion(request: ApplySuggestionRequest):
         return {"success": False, "message": e.detail}
     except Exception as e:
         return {"success": False, "message": f"ファイルの変更中に予期せぬエラーが発生しました: {e}"}
+
+from reportlab.pdfgen import canvas
+import textwrap
+
+# --- PDF生成ロジック (Canvas API を使用した安定版) ---
+def create_pdf_report(data: PdfRequest) -> io.BytesIO:
+    """分析データからPDFレポートを生成する（Canvas API使用）"""
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+
+    # 日本語フォントの登録
+    try:
+        pdfmetrics.registerFont(UnicodeCIDFont('HeiseiMin-W3'))
+        font_name = 'HeiseiMin-W3'
+    except Exception:
+        print("警告: HeiseiMin-W3フォントが見つかりません。デフォルトフォントで続行します。")
+        font_name = 'Helvetica'
+
+    # ヘルパー関数
+    def draw_wrapped_text(text, x, y, max_width, font, size, leading):
+        c.setFont(font, size)
+        lines = textwrap.wrap(text, width=int(max_width / (size * 0.6)))
+        for line in lines:
+            c.drawString(x, y, line)
+            y -= leading
+        return y
+
+    # 1. レポートタイトル
+    c.setFont(font_name, 24)
+    c.drawCentredString(width / 2.0, height - inch, "AI Website Analyzer レポート")
+
+    y_position = height - 1.5 * inch
+
+    # 2. 各ページの分析結果
+    for page in data.pages_analysis:
+        if y_position < 2 * inch:
+            c.showPage()
+            y_position = height - inch
+
+        c.setFont(font_name, 18)
+        y_position -= 0.3 * inch
+        c.drawString(inch, y_position, f"分析ページ: {page.url}")
+        y_position -= 0.3 * inch
+
+        # 提案キーワード
+        if page.suggested_keywords:
+            c.setFont(font_name, 14)
+            c.drawString(inch, y_position, "提案キーワード")
+            y_position -= 0.25 * inch
+            keywords_text = ", ".join(page.suggested_keywords)
+            y_position = draw_wrapped_text(keywords_text, inch * 1.2, y_position, width - 2.4 * inch, font_name, 10, 14)
+            y_position -= 0.2 * inch
+
+        # 改善提案
+        c.setFont(font_name, 14)
+        c.drawString(inch, y_position, "改善提案")
+        y_position -= 0.25 * inch
+
+        for i, suggestion in enumerate(page.suggestions, 1):
+            if y_position < 2 * inch:
+                c.showPage()
+                y_position = height - inch
+
+            y_position = draw_wrapped_text(f"{i}. {suggestion.category}", inch * 1.2, y_position, width - 2.4 * inch, font_name, 12, 16)
+
+            if suggestion.original_text:
+                y_position = draw_wrapped_text(f"改善前: {suggestion.original_text}", inch * 1.4, y_position, width - 2.8 * inch, 'Courier', 9, 12)
+
+            if suggestion.suggested_text:
+                y_position = draw_wrapped_text(f"改善後: {suggestion.suggested_text}", inch * 1.4, y_position, width - 2.8 * inch, 'Courier', 9, 12)
+
+            y_position = draw_wrapped_text(f"提案理由: {suggestion.reason}", inch * 1.4, y_position, width - 2.8 * inch, font_name, 10, 14)
+            y_position -= 0.2 * inch
+
+        c.showPage()
+        y_position = height - inch
+
+    # 3. 最後のメッセージ
+    if data.closing_message:
+        c.setFont(font_name, 16)
+        c.drawCentredString(width / 2.0, y_position, data.closing_message)
+
+    c.save()
+    buffer.seek(0)
+    return buffer
+
+@app.post("/generate_pdf")
+async def generate_pdf_endpoint(request: PdfRequest):
+    """分析結果からPDFレポートを生成して返す"""
+    try:
+        pdf_buffer = create_pdf_report(request)
+        headers = {
+            'Content-Disposition': 'attachment; filename="seo_analysis_report.pdf"'
+        }
+        return StreamingResponse(pdf_buffer, media_type='application/pdf', headers=headers)
+    except Exception as e:
+        print(f"PDF生成中にエラーが発生しました: {e}")
+        raise HTTPException(status_code=500, detail=f"PDFの生成中にエラーが発生しました: {e}")
