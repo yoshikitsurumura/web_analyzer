@@ -26,6 +26,8 @@ if not gemini_api_key:
 if not gemini_api_key:
     raise ValueError("GEMINI_API_KEY または GOOGLE_API_KEY 環境変数が設定されていません。")
 
+# AIライブラリにAPIキーを設定します。
+# これにより、コード内に直接キーを書き込むことなく、安全にAPIを利用できます。
 genai.configure(api_key=gemini_api_key)
 
 # --- FastAPIアプリのセットアップ ---
